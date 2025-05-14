@@ -2831,6 +2831,134 @@ class PolicySetControllerAPI(APIClient):
         return (result, response, None)
 
     @synchronized(global_rule_lock)
+    def add_portal_rule_v2(self, name: str, **kwargs) -> tuple:
+        """
+        Add a new portal policy rule.
+
+
+        Args:
+            name (str):
+                The name of the new portal rule.
+            action (str):
+                The action for the policy. Accepted value is: ``CHECK_PRIVILEGED_PORTAL_CAPABILITIES``
+
+            **kwargs:
+                Optional keyword args.
+
+        Keyword Args:
+            rule_order (str):
+                The new order for the rule.
+            conditions (list):
+                A list of conditional rule tuples. Tuples must follow the convention: `Object Type`, `LHS value`, `RHS value`.
+                If you are adding multiple values for the same object type then you will need a new entry for each value.
+
+                - `conditions`: This is for providing the set of conditions for the policy
+                    - `object_type`: This is for specifying the policy criteria.
+                        The following values are supported: "app", "app_group", "saml", "scim", "scim_group"
+                        - `app`: The unique Application Segment ID
+                        - `app_group`: The unique Segment Group ID
+                        - `saml`: The unique Identity Provider ID and SAML attribute ID
+                        - `scim`: The unique Identity Provider ID and SCIM attribute ID
+                        - `scim_group`: The unique Identity Provider ID and SCIM_GROUP ID
+                        - `country_code`: The unique Country Code
+
+            portal_rule_capabilities (dict): A dictionary specifying the portal rule capabilities with boolean values.
+                The supported capabilities are:
+
+                - delete_file (bool): Indicates the delete file operation on PRA my files portal.
+                - uninspected_file (bool): Indicates the access uninpected file operation on PRA my files portal.
+                - sandbox_scan (bool): Indicates the sandbox scan enabled for file on PRA my files portal.
+                - di_scan (bool): Indicates the di scan enabled for file on PRA my files portal.
+                - request_approval (bool): Enables user to send request for console access using PRA EU approval portal.
+                - response_approval (bool): Enables user to approve request for console access using PRA EU approval portal.
+
+        Returns:
+            :obj:`Tuple`: The resource record of the newly created portal policy rule.
+
+        Example:
+            Add a new portal policy rule with various capabilities and conditions:
+
+            .. code-block:: python
+
+                add_portal_rule_v2(
+                    name='New_Capability_Rule',
+                    description='New_Capability_Rule',
+                    conditions=[
+                        ("scim_group", [("idp_id", "scim_group_id"), ("idp_id", "scim_group_id")]),
+                        ("country_code", "US", True)
+                        ("privilege_portal", ["portal1_1", "portal2_id"])
+                    ],
+                    portal_rule_capabilities={
+                        "delete_file": True,
+                        "sandbox_scan": True,
+                    }
+                )
+        """
+        policy_type_response, _, err = self.get_policy(
+            "portal_policy", query_params={"microtenantId": kwargs.get("microtenantId")}
+        )
+        if err or not policy_type_response:
+            return (None, None, "Error retrieving policy for 'portal_policy': {err}")
+
+        policy_set_id = policy_type_response.get("id")
+        if not policy_set_id:
+            return (None, None, "No policy ID found for 'portal_policy' policy type")
+
+        http_method = "post".upper()
+        api_url = format_url(
+            f"""
+            {self._zpa_base_endpoint_v2}
+            /policySet/{policy_set_id}/rule
+        """
+        )
+
+        body = kwargs
+
+        microtenant_id = body.get("microtenant_id", None)
+        params = {"microtenantId": microtenant_id} if microtenant_id else {}
+
+        payload = {
+            "name": name,
+            "action": "CHECK_PRIVILEGED_PORTAL_CAPABILITIES",
+            "conditions": self._create_conditions_v2(kwargs.pop("conditions", [])),
+        }
+
+        if "portal_rule_capabilities" in kwargs:
+            capabilities = []
+            priv_caps_map = kwargs.pop("portal_rule_capabilities")
+
+            if priv_caps_map.get("delete_file", False):
+                capabilities.append("DELETE_FILE")
+            if priv_caps_map.get("uninspected_file", False):
+                capabilities.append("ACCESS_UNINSPECTED_FILE")
+            if priv_caps_map.get("sandbox_scan", False):
+                capabilities.append("UPLOAD_INSPECTED_SANDBOX")
+
+            if priv_caps_map.get("di_scan") is True:
+                capabilities.append("UPLOAD_INSPECTED_SCAN")
+            elif priv_caps_map.get("request_approval") is False:
+                capabilities.append("REQUEST_APPROVAL")
+
+            if priv_caps_map.get("response_approval", False):
+                capabilities.append("REVIEW_APPROVAL")
+
+            payload["privilegedPortalCapabilities"] = {"capabilities": capabilities}
+
+        request, error = self._request_executor.create_request(http_method, api_url, body=payload, params=params)
+        if error:
+            return (None, None, error)
+
+        response, error = self._request_executor.execute(request, PolicySetControllerV2)
+        if error:
+            return (None, response, error)
+
+        try:
+            result = PolicySetControllerV2(self.form_response_body(response.get_body()))
+        except Exception as error:
+            return (None, response, error)
+        return (result, response, None)
+
+    @synchronized(global_rule_lock)
     def add_redirection_rule_v2(self, name: str, action: str, service_edge_group_ids: list = [], **kwargs) -> tuple:
         """
         Add a new Redirection Policy rule.
