@@ -16,7 +16,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from zscaler.api_client import APIClient
 from zscaler.request_executor import RequestExecutor
-from zscaler.zia.models.dns_gatways import DNSGateways
+from zscaler.zia.models.dns_gateways import DNSGateways
 from zscaler.utils import format_url
 import logging
 
@@ -264,7 +264,7 @@ class DNSGatewayAPI(APIClient):
             /dnsGateways/{gateway_id}
         """
         )
-        body = kwargs.copy()
+        body = kwargs
         body["id"] = gateway_id
 
         request, error = self._request_executor.create_request(
