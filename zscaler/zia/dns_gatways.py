@@ -20,7 +20,7 @@ from zscaler.zia.models.dns_gateways import DNSGateways
 from zscaler.utils import format_url
 import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("zscaler-sdk-python")
 
 
 class DNSGatewayAPI(APIClient):

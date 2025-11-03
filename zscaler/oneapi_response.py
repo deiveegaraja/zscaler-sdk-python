@@ -2,7 +2,7 @@ import json
 import logging
 import uuid
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("zscaler-sdk-python")
 
 
 class ZscalerAPIResponse:

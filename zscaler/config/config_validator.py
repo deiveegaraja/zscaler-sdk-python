@@ -11,7 +11,7 @@ from zscaler.error_messages import (
     ERROR_MESSAGE_PROXY_INVALID_PORT,
 )
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("zscaler-sdk-python")
 
 
 class ConfigValidator:

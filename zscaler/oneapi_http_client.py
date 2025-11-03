@@ -11,7 +11,7 @@ from zscaler.zia.legacy import LegacyZIAClientHelper
 from zscaler.zwa.legacy import LegacyZWAClientHelper
 from urllib.parse import urlparse
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("zscaler-sdk-python")
 
 
 class HTTPClient:
