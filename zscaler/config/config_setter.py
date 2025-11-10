@@ -7,7 +7,7 @@ from flatdict import FlatDict
 from zscaler.helpers import to_snake_case
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("zscaler-sdk-python")
 
 
 class ConfigSetter:

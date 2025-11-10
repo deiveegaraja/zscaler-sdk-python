@@ -9,7 +9,7 @@ from zscaler.user_agent import UserAgent
 from zscaler.oneapi_http_client import HTTPClient
 from zscaler.errors.response_checker import check_response_for_error
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("zscaler-sdk-python")
 
 
 class OAuth:
